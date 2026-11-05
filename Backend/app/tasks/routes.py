@@ -17,6 +17,7 @@ from flask import g, jsonify, request
 
 from ..db import get_db
 from ..decorators import require_role
+from ..email import send_task_created_email, send_task_completed_email
 from . import tasks_bp
 
 
@@ -162,6 +163,9 @@ def create_task():
         )
         full_task = cur.fetchone()
         db.commit()
+
+    # Gmail notification to assignee (runs asynchronously in background thread)
+    send_task_created_email(full_task)
 
     return jsonify(_format_task(full_task)), 201
 
@@ -541,6 +545,11 @@ def update_task_status(task_id):
         )
         updated = cur.fetchone()
         db.commit()
+
+    # Gmail notification to creator if task was just marked completed
+    if new_status == "completed" and old_status != "completed":
+        completer_name = g.user.get("name") or g.user.get("email") or "Team Member"
+        send_task_completed_email(updated, completer_name)
 
     return jsonify(_format_task(updated))
 

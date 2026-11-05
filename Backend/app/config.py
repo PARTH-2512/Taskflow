@@ -40,6 +40,11 @@ class Config:
     # Database (Supabase Postgres, accessed with service-role credentials)
     DATABASE_URL: str = _require("DATABASE_URL")
 
-    # Frontend URL (used for CORS and post-login redirect)
+    # Frontend URL (used for CORS, links in emails, and post-login redirect)
     FRONTEND_URL: str = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
+    # ── Gmail API Integration (Phase 5) ───────────────────────────
+    # The Gmail address authorized to send notification emails
+    GMAIL_SENDER_EMAIL: str | None = os.environ.get("GMAIL_SENDER_EMAIL")
+    # OAuth 2.0 refresh token with https://www.googleapis.com/auth/gmail.send scope
+    GMAIL_REFRESH_TOKEN: str | None = os.environ.get("GMAIL_REFRESH_TOKEN")
