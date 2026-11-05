@@ -2,8 +2,8 @@
 Users routes
 ============
 
-GET    /users         — list active users with workload stats (admin, manager)
-PATCH  /users/:id     — update user role or active status (admin only)
+GET    /users         — list users with workload stats (all active users; admin can pass include_inactive=true)
+PATCH  /users/:id     — update user role, capacity, or active status (admin only)
 DELETE /users/:id     — deactivate user (admin only)
 """
 
@@ -14,16 +14,22 @@ from . import users_bp
 
 
 @users_bp.route("", methods=["GET"])
-@require_role("admin", "manager")
+@require_role()
 def list_users():
     """
-    List all active users for dropdowns, task assignments, and workload views.
-    Includes current open task count, total open hours, and capacity status.
+    List users for dropdowns, task assignments, team workload, and admin management.
+    Includes open task count, total open hours, and capacity status.
+    Admin can pass ?include_inactive=true to see deactivated accounts.
     """
+    role = g.user["role"]
+    include_inactive = request.args.get("include_inactive", "false").lower() == "true" and role == "admin"
+
+    where_clause = "" if include_inactive else "WHERE u.is_active = TRUE"
+
     db = get_db()
     with db.cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT 
                 u.id,
                 u.email,
@@ -37,8 +43,8 @@ def list_users():
                 COALESCE(w.capacity_status, 'available') AS capacity_status
             FROM users u
             LEFT JOIN user_workload w ON w.user_id = u.id
-            WHERE u.is_active = TRUE
-            ORDER BY u.name ASC;
+            {where_clause}
+            ORDER BY u.is_active DESC, u.name ASC;
             """
         )
         users = cur.fetchall()
@@ -65,12 +71,13 @@ def list_users():
 @require_role("admin")
 def update_user(user_id):
     """
-    Admin updates a user's role or active status.
+    Admin updates a user's role, active status, or weekly capacity.
     Body may contain:
       - role: 'admin' | 'manager' | 'user'
       - is_active: bool
       - weekly_capacity_hours: float
     """
+    is_self = str(user_id) == str(g.user["sub"])
     data = request.get_json(silent=True) or {}
     allowed_roles = {"admin", "manager", "user"}
 
@@ -81,12 +88,17 @@ def update_user(user_id):
         role = data["role"]
         if role not in allowed_roles:
             return jsonify({"error": f"Invalid role. Must be one of: {', '.join(allowed_roles)}"}), 400
+        if is_self and role != "admin":
+            return jsonify({"error": "You cannot demote your own admin account"}), 400
         updates.append("role = %s")
         params.append(role)
 
     if "is_active" in data:
+        active_bool = bool(data["is_active"])
+        if is_self and not active_bool:
+            return jsonify({"error": "You cannot deactivate your own admin account"}), 400
         updates.append("is_active = %s")
-        params.append(bool(data["is_active"]))
+        params.append(active_bool)
 
     if "weekly_capacity_hours" in data:
         try:
@@ -133,7 +145,7 @@ def update_user(user_id):
 @require_role("admin")
 def deactivate_user(user_id):
     """
-    Admin soft-deactivates a user. Foreign keys are preserved so audit trails remain valid.
+    Admin soft-deactivates a user.
     """
     if str(user_id) == str(g.user["sub"]):
         return jsonify({"error": "You cannot deactivate your own admin account"}), 400
@@ -155,4 +167,3 @@ def deactivate_user(user_id):
         db.commit()
 
     return jsonify({"message": "User deactivated successfully"})
-

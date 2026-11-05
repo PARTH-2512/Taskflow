@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = ["/login"];
+const PUBLIC_ROUTES = ["/login", "/_not-found"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -37,7 +37,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Run on all routes except Next.js internals and static assets
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Exclude Next.js internals, static assets, and _not-found
+  matcher: ["/((?!_next/static|_next/image|_not-found|favicon.ico).*)"],
 };
-
