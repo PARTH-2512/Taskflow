@@ -73,7 +73,7 @@ def _log_activity(cur, task_id: str, actor_id: str, event_type: str, from_val: s
 # ── Create Task ────────────────────────────────────────────────────────────
 
 @tasks_bp.route("", methods=["POST"])
-@require_role("admin", "manager")
+@require_role()
 def create_task():
     """
     Create and assign a task.
@@ -170,15 +170,15 @@ def create_task():
     return jsonify(_format_task(full_task)), 201
 
 
-# ── List Tasks (Admin / Manager) ───────────────────────────────────────────
+# ── List Tasks (All Authenticated Users) ───────────────────────────────────
 
 @tasks_bp.route("", methods=["GET"])
-@require_role("admin", "manager")
+@require_role()
 def list_tasks():
     """
     List tasks.
     Admin sees all tasks.
-    Manager sees only tasks they created.
+    Non-admin users (managers and users) see only tasks they created.
     Query params: q, status, priority, assigned_to, sort, order
     """
     role = g.user["role"]
@@ -187,8 +187,8 @@ def list_tasks():
     where_clauses = ["t.is_pool = FALSE"]
     params = []
 
-    # Scoping: Manager only sees tasks they created
-    if role == "manager":
+    # Scoping: Non-admin only sees tasks they created
+    if role != "admin":
         where_clauses.append("t.created_by = %s")
         params.append(user_id)
 
@@ -336,11 +336,11 @@ def get_task(task_id):
 # ── Edit / Reassign Task ───────────────────────────────────────────────────
 
 @tasks_bp.route("/<uuid:task_id>", methods=["PATCH"])
-@require_role("admin", "manager")
+@require_role()
 def edit_task(task_id):
     """
-    Admin or Manager edits a task.
-    Managers can only edit tasks they created.
+    Admin or creator edits a task.
+    Non-admin users can only edit tasks they created.
     """
     user_id = g.user["sub"]
     role = g.user["role"]
@@ -361,8 +361,8 @@ def edit_task(task_id):
         if not task:
             return jsonify({"error": "Task not found"}), 404
 
-        if role == "manager" and str(task["created_by"]) != user_id:
-            return jsonify({"error": "Managers can only edit tasks they created"}), 403
+        if role != "admin" and str(task["created_by"]) != user_id:
+            return jsonify({"error": "You can only edit tasks you created"}), 403
 
         data = request.get_json(silent=True) or {}
         updates = []
@@ -570,11 +570,11 @@ def update_task_status(task_id):
 # ── Delete Task ────────────────────────────────────────────────────────────
 
 @tasks_bp.route("/<uuid:task_id>", methods=["DELETE"])
-@require_role("admin", "manager")
+@require_role()
 def delete_task(task_id):
     """
     Delete a task.
-    Admin can delete any task. Manager can only delete tasks they created.
+    Admin can delete any task. Non-admin users can only delete tasks they created.
     """
     user_id = g.user["sub"]
     role = g.user["role"]
@@ -587,8 +587,8 @@ def delete_task(task_id):
         if not task:
             return jsonify({"error": "Task not found"}), 404
 
-        if role == "manager" and str(task["created_by"]) != user_id:
-            return jsonify({"error": "Managers can only delete tasks they created"}), 403
+        if role != "admin" and str(task["created_by"]) != user_id:
+            return jsonify({"error": "You can only delete tasks you created"}), 403
 
         cur.execute("DELETE FROM tasks WHERE id = %s;", (str(task_id),))
         db.commit()

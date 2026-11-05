@@ -16,6 +16,12 @@ const PUBLIC_ROUTES = ["/login", "/_not-found"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Never redirect /api proxy routes — let them pass directly to backend
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get("token");
 
   const isPublic = PUBLIC_ROUTES.some(
@@ -37,6 +43,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Exclude Next.js internals, static assets, and _not-found
-  matcher: ["/((?!_next/static|_next/image|_not-found|favicon.ico).*)"],
+  // Exclude API routes, Next.js internals, static assets, and _not-found
+  matcher: ["/((?!api|_next/static|_next/image|_not-found|favicon.ico).*)"],
 };

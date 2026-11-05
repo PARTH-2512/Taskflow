@@ -263,8 +263,9 @@ npm run dev
 
 See [`.env.example`](file:///.env.example) for the consolidated list:
 
+### Local Development
 ```env
-# Backend
+# Backend (Backend/.env)
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:5000/auth/callback
@@ -276,8 +277,27 @@ FRONTEND_URL=http://localhost:3000
 GMAIL_SENDER_EMAIL=admin@yourcompany.com
 GMAIL_REFRESH_TOKEN=your-gmail-api-refresh-token
 
-# Frontend
+# Frontend (Frontend/.env.local)
 NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+### Production Deployment (Vercel + Render)
+```env
+# Render (Backend Web Service)
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=https://<your-vercel-app>.vercel.app/api/auth/callback
+SECRET_KEY=generate-with-python-secrets-token-hex
+FLASK_ENV=production
+ADMIN_EMAIL=admin@yourcompany.com
+DATABASE_URL=postgresql://postgres.xxx:password@pooler.supabase.com:5432/postgres
+FRONTEND_URL=https://<your-vercel-app>.vercel.app
+GMAIL_SENDER_EMAIL=admin@yourcompany.com
+GMAIL_REFRESH_TOKEN=your-gmail-api-refresh-token
+
+# Vercel (Frontend Project Settings)
+NEXT_PUBLIC_API_URL=/api
+BACKEND_URL=https://<your-render-service>.onrender.com
 ```
 
 ---
@@ -320,3 +340,4 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 
 ## 📄 License
 MIT License. Built for Hair Drama Tech Assignment.
+

@@ -183,10 +183,10 @@ export default function TaskDetailPage() {
             My Tasks
           </Link>
           <span>/</span>
-          {user && (user.role === "admin" || user.role === "manager") && (
+          {user && (
             <>
               <Link href="/tasks" className="hover:text-indigo-600 dark:hover:text-indigo-400">
-                All Tasks
+                Created Tasks
               </Link>
               <span>/</span>
             </>

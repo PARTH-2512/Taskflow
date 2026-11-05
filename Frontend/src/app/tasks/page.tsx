@@ -70,14 +70,14 @@ export default function AllTasksPage() {
 
   // Initial load & filter-change reload
   useEffect(() => {
-    if (user && (user.role === "admin" || user.role === "manager")) {
+    if (user) {
       loadData();
     }
   }, [user, search, statusFilter, priorityFilter, assigneeFilter, sortBy, sortOrder]);
 
   // Polling — reset whenever filters change
   useEffect(() => {
-    if (!user || (user.role !== "admin" && user.role !== "manager")) return;
+    if (!user) return;
 
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(() => {
@@ -170,28 +170,8 @@ export default function AllTasksPage() {
     );
   }
 
-  if (!user || (user.role !== "admin" && user.role !== "manager")) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <Navbar />
-        <main className="flex-1 max-w-xl mx-auto px-4 py-16 text-center">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Manager &amp; Admin Access Only</h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
-              Standard users work from their personal Priority To-Do list.
-            </p>
-            <div className="mt-6">
-              <Link
-                href="/tasks/mine"
-                className="inline-flex px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
-              >
-                Go to My Tasks
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
+  if (!user) {
+    return null;
   }
 
   const selectedAssigneeUser = users.find((u) => u.id === formAssignee);

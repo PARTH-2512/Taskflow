@@ -17,7 +17,7 @@ interface NavLinkItem {
 const NAV_LINKS: NavLinkItem[] = [
   { href: "/dashboard", label: "Dashboard", roles: ["admin", "manager", "user"] },
   { href: "/tasks/mine", label: "My Tasks", roles: ["admin", "manager", "user"] },
-  { href: "/tasks", label: "All Tasks", roles: ["admin", "manager"] },
+  { href: "/tasks", label: "Created Tasks", roles: ["admin", "manager", "user"] },
   { href: "/team", label: "Team", roles: ["admin", "manager", "user"] },
   { href: "/pool", label: "Open Pool", roles: ["admin", "manager", "user"] },
   { href: "/leaderboard", label: "Leaderboard", roles: ["admin", "manager", "user"] },
