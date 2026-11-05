@@ -13,6 +13,8 @@ from .errors import register_error_handlers
 from .auth import auth_bp
 from .users import users_bp
 from .tasks import tasks_bp
+from .pool import pool_bp
+from .points import points_bp
 
 
 def create_app(config_class: type = Config) -> Flask:
@@ -34,6 +36,8 @@ def create_app(config_class: type = Config) -> Flask:
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(users_bp, url_prefix="/users")
     app.register_blueprint(tasks_bp, url_prefix="/tasks")
+    app.register_blueprint(pool_bp, url_prefix="/pool")
+    app.register_blueprint(points_bp, url_prefix="/points")
 
     # Teardown: close the DB connection at the end of each request
     app.teardown_appcontext(close_db)

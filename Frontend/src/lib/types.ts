@@ -61,3 +61,50 @@ export interface TaskActivity {
   to_value: string | null;
   created_at: string;
 }
+
+export interface PoolTask {
+  id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  potential_points: number;
+  estimated_hours: number | null;
+  created_by: string;
+  creator_name?: string;
+  creator_email?: string;
+  assigned_to: string | null;
+  is_pool: boolean;
+  claimed_at: string | null;
+  created_at: string;
+}
+
+export interface PoolData {
+  unclaimed: PoolTask[];
+  my_claimed: PoolTask[];
+  active_claimed_count: number;
+  max_claim_limit: number;
+}
+
+export interface LeaderboardEntry {
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+  total_points: number;
+  rank: number;
+}
+
+export interface PointsHistoryItem {
+  id: string;
+  task_id: string;
+  task_title: string;
+  task_priority: TaskPriority;
+  points: number;
+  reason: string;
+  created_at: string;
+}
+
+export interface MyPointsData {
+  total_points: number;
+  history: PointsHistoryItem[];
+}

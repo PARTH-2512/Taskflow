@@ -530,6 +530,19 @@ def update_task_status(task_id):
         if new_status == "completed":
             _log_activity(cur, str(task_id), user_id, "completed", None, "Task marked as completed")
 
+            # If this was a claimed Open Pool task, award points in points_ledger
+            if task.get("is_pool"):
+                priority_pts = {1: 5, 2: 10, 3: 20}
+                pts = priority_pts.get(task.get("priority", 2), 10)
+                cur.execute(
+                    """
+                    INSERT INTO points_ledger (user_id, task_id, points, reason)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (user_id, task_id) DO NOTHING;
+                    """,
+                    (user_id, str(task_id), pts, f"Completed pool task: {task['title']}"),
+                )
+
         cur.execute(
             """
             SELECT 
