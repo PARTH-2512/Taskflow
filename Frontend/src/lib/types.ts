@@ -10,6 +10,54 @@ export interface User {
   role: Role;
   is_active: boolean;
   weekly_capacity_hours: number;
-  created_at: string;
+  created_at?: string;
+  open_tasks?: number;
+  open_hours?: number;
+  capacity_status?: "available" | "busy" | "overloaded";
 }
 
+export type TaskStatus = "pending" | "in_progress" | "completed";
+export type TaskPriority = 1 | 2 | 3; // 1 = Low, 2 = Medium, 3 = High
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  due_date: string | null;
+  is_overdue?: boolean;
+  estimated_hours: number | null;
+  created_by: string;
+  creator_name?: string;
+  creator_email?: string;
+  assigned_to: string | null;
+  assignee_name?: string | null;
+  assignee_email?: string | null;
+  assignee_avatar?: string | null;
+  is_pool: boolean;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface TaskActivity {
+  id: string;
+  task_id: string;
+  actor_id: string;
+  actor_name: string;
+  actor_email: string;
+  actor_avatar: string | null;
+  event_type:
+    | "created"
+    | "assigned"
+    | "reassigned"
+    | "edited"
+    | "status_changed"
+    | "claimed"
+    | "released"
+    | "completed"
+    | "commented";
+  from_value: string | null;
+  to_value: string | null;
+  created_at: string;
+}
