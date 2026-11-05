@@ -23,8 +23,8 @@ These come straight from the assignment. Everything else is bonus.
 
 **Delivery**
 - [ ] Deployed to production (Vercel + Railway/Render + Supabase) with a **working live URL**
-- [ ] GitHub repo: **clean commit history**, `/migrations` folder, `.env.example`
-- [ ] README with an **Architecture** section
+- [x] GitHub repo: **clean commit history**, `/migrations` folder, `.env.example`
+- [x] README with an **Architecture** section
 - [ ] **Loom video** walking through ALL the code and features
 - [ ] Submission form filled with the live URL
 
@@ -267,7 +267,7 @@ All role checks use one decorator: `@require_role("admin", "manager")`.
 **Phase 9: Deploy and submit**
 - [ ] Deploy all three parts, set production env vars and OAuth redirect URIs
 - [ ] Full test on the live URL with 3 different Google accounts
-- [ ] README with Architecture
+- [x] README with Architecture
 - [ ] Loom video, form submission
 
 If time gets tight, cut in this order: reminder emails, dark mode, polling, comments, leaderboard. Never cut the mandatory checklist.
