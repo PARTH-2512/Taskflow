@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import { Task, User, TaskPriority, TaskStatus } from "@/lib/types";
+
+/** How often to silently refresh the task list (ms). */
+const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 export default function AllTasksPage() {
   const { user, loading: authLoading } = useAuth();
@@ -35,9 +38,11 @@ export default function AllTasksPage() {
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  async function loadData() {
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function loadData(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Build query string
@@ -57,16 +62,31 @@ export default function AllTasksPage() {
       setTasks(tasksData);
       setUsers(usersData);
     } catch (err: any) {
-      setError(err.message || "Failed to load tasks");
+      if (!silent) setError(err.message || "Failed to load tasks");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
+  // Initial load & filter-change reload
   useEffect(() => {
     if (user && (user.role === "admin" || user.role === "manager")) {
       loadData();
     }
+  }, [user, search, statusFilter, priorityFilter, assigneeFilter, sortBy, sortOrder]);
+
+  // Polling — reset whenever filters change
+  useEffect(() => {
+    if (!user || (user.role !== "admin" && user.role !== "manager")) return;
+
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(() => {
+      loadData(true /* silent */);
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [user, search, statusFilter, priorityFilter, assigneeFilter, sortBy, sortOrder]);
 
   function openCreateModal() {
@@ -144,7 +164,7 @@ export default function AllTasksPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -152,12 +172,12 @@ export default function AllTasksPage() {
 
   if (!user || (user.role !== "admin" && user.role !== "manager")) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
         <Navbar />
         <main className="flex-1 max-w-xl mx-auto px-4 py-16 text-center">
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900">Manager & Admin Access Only</h2>
-            <p className="text-gray-500 mt-2 text-sm">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Manager &amp; Admin Access Only</h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
               Standard users work from their personal Priority To-Do list.
             </p>
             <div className="mt-6">
@@ -179,29 +199,29 @@ export default function AllTasksPage() {
 
   const priorityLabel = { 3: "High", 2: "Medium", 1: "Low" };
   const priorityBadge = {
-    3: "bg-red-50 text-red-700 border-red-200",
-    2: "bg-amber-50 text-amber-700 border-amber-200",
-    1: "bg-gray-50 text-gray-700 border-gray-200",
+    3: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800",
+    2: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    1: "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600",
   };
 
   const statusBadge = {
-    completed: "bg-green-50 text-green-700 border-green-200",
-    in_progress: "bg-blue-50 text-blue-700 border-blue-200",
-    pending: "bg-amber-50 text-amber-700 border-amber-200",
+    completed: "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+    in_progress: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",
+    pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
               {user.role === "admin" ? "All Team Tasks" : "Tasks Created by Me"}
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {user.role === "admin"
                 ? "Manage, assign, and track all tasks across the company."
                 : "Manage and assign tasks you have created for your team."}
@@ -217,27 +237,27 @@ export default function AllTasksPage() {
         </div>
 
         {/* Filters Bar */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-6 space-y-3">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm mb-6 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             {/* Search */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Search</label>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Search</label>
               <input
                 type="text"
                 placeholder="Search title or details..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
 
             {/* Status */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Status</label>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 <option value="">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -248,11 +268,11 @@ export default function AllTasksPage() {
 
             {/* Priority */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Priority</label>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Priority</label>
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 <option value="">All Priorities</option>
                 <option value="3">High</option>
@@ -263,11 +283,11 @@ export default function AllTasksPage() {
 
             {/* Assignee */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Assignee</label>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Assignee</label>
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 <option value="">All Assignees</option>
                 {users.map((u) => (
@@ -279,7 +299,7 @@ export default function AllTasksPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+          <div className="flex flex-wrap items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
             <span>Showing {tasks.length} tasks</span>
             <div className="flex items-center gap-2">
               <span>Sort by:</span>
@@ -288,7 +308,7 @@ export default function AllTasksPage() {
                   if (sortBy === "created_at") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                   else { setSortBy("created_at"); setSortOrder("desc"); }
                 }}
-                className={`px-2 py-1 rounded cursor-pointer ${sortBy === "created_at" ? "bg-indigo-50 text-indigo-700 font-semibold" : ""}`}
+                className={`px-2 py-1 rounded cursor-pointer ${sortBy === "created_at" ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-semibold" : ""}`}
               >
                 Created {sortBy === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
               </button>
@@ -297,7 +317,7 @@ export default function AllTasksPage() {
                   if (sortBy === "priority") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                   else { setSortBy("priority"); setSortOrder("desc"); }
                 }}
-                className={`px-2 py-1 rounded cursor-pointer ${sortBy === "priority" ? "bg-indigo-50 text-indigo-700 font-semibold" : ""}`}
+                className={`px-2 py-1 rounded cursor-pointer ${sortBy === "priority" ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-semibold" : ""}`}
               >
                 Priority {sortBy === "priority" && (sortOrder === "asc" ? "↑" : "↓")}
               </button>
@@ -306,7 +326,7 @@ export default function AllTasksPage() {
                   if (sortBy === "due_date") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                   else { setSortBy("due_date"); setSortOrder("asc"); }
                 }}
-                className={`px-2 py-1 rounded cursor-pointer ${sortBy === "due_date" ? "bg-indigo-50 text-indigo-700 font-semibold" : ""}`}
+                className={`px-2 py-1 rounded cursor-pointer ${sortBy === "due_date" ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-semibold" : ""}`}
               >
                 Due Date {sortBy === "due_date" && (sortOrder === "asc" ? "↑" : "↓")}
               </button>
@@ -318,17 +338,17 @@ export default function AllTasksPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="text-sm text-gray-500 mt-2">Loading tasks...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Loading tasks...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400">
             {error}
           </div>
         ) : tasks.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 text-center py-16 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center py-16 px-4">
             <div className="text-4xl mb-3">📋</div>
-            <h3 className="text-lg font-semibold text-gray-900">No tasks found</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No tasks found</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Create your first task or adjust your search filters above.
             </p>
             <button
@@ -339,12 +359,12 @@ export default function AllTasksPage() {
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="divide-y divide-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/75 transition"
+                  className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/75 dark:hover:bg-gray-700/40 transition"
                 >
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -363,23 +383,23 @@ export default function AllTasksPage() {
 
                     <Link
                       href={`/tasks/${task.id}`}
-                      className="text-base font-semibold text-gray-900 hover:text-indigo-600 transition block"
+                      className="text-base font-semibold text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition block"
                     >
                       {task.title}
                     </Link>
 
                     {task.description && (
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
                         {task.description}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mt-2">
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
                       <span>
-                        👤 Assigned: <strong className="text-gray-700">{task.assignee_name || "Unassigned"}</strong>
+                        👤 Assigned: <strong className="text-gray-700 dark:text-gray-300">{task.assignee_name || "Unassigned"}</strong>
                       </span>
                       {task.due_date && (
-                        <span className={task.is_overdue ? "text-rose-600 font-semibold" : ""}>
+                        <span className={task.is_overdue ? "text-rose-600 dark:text-rose-400 font-semibold" : ""}>
                           📅 Due: {task.due_date}
                         </span>
                       )}
@@ -394,19 +414,19 @@ export default function AllTasksPage() {
                   <div className="flex items-center gap-2 self-end md:self-center">
                     <Link
                       href={`/tasks/${task.id}`}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
                     >
-                      View & History
+                      View &amp; History
                     </Link>
                     <button
                       onClick={() => openEditModal(task)}
-                      className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition cursor-pointer"
+                      className="px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition cursor-pointer"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(task.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition cursor-pointer"
+                      className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition cursor-pointer"
                     >
                       Delete
                     </button>
@@ -420,21 +440,21 @@ export default function AllTasksPage() {
         {/* Modal: Create / Edit Task */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                   {editingTask ? "Edit / Reassign Task" : "Create New Task"}
                 </h2>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 text-lg cursor-pointer"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-lg cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
               {formError && (
-                <div className="mt-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">
+                <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs rounded-lg p-3">
                   {formError}
                 </div>
               )}
@@ -442,7 +462,7 @@ export default function AllTasksPage() {
               <form onSubmit={handleFormSubmit} className="mt-4 space-y-4">
                 {/* Title */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                     Task Title *
                   </label>
                   <input
@@ -451,13 +471,13 @@ export default function AllTasksPage() {
                     placeholder="e.g. Implement Google OAuth login"
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                     Description
                   </label>
                   <textarea
@@ -465,20 +485,20 @@ export default function AllTasksPage() {
                     placeholder="Details, acceptance criteria, or requirements..."
                     value={formDesc}
                     onChange={(e) => setFormDesc(e.target.value)}
-                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 {/* Priority & Estimated Hours */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                       Priority
                     </label>
                     <select
                       value={formPriority}
                       onChange={(e) => setFormPriority(Number(e.target.value) as TaskPriority)}
-                      className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     >
                       <option value={3}>🔴 High</option>
                       <option value={2}>🟡 Medium</option>
@@ -487,7 +507,7 @@ export default function AllTasksPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                       Estimated Hours
                     </label>
                     <input
@@ -497,34 +517,34 @@ export default function AllTasksPage() {
                       placeholder="e.g. 4.5"
                       value={formEstHours}
                       onChange={(e) => setFormEstHours(e.target.value)}
-                      className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
                 </div>
 
                 {/* Due Date */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                     Due Date
                   </label>
                   <input
                     type="date"
                     value={formDueDate}
                     onChange={(e) => setFormDueDate(e.target.value)}
-                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 {/* Assignee with Capacity Badge */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                     Assignee *
                   </label>
                   <select
                     required
                     value={formAssignee}
                     onChange={(e) => setFormAssignee(e.target.value)}
-                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   >
                     <option value="">Select a team member</option>
                     {users.map((u) => (
@@ -536,7 +556,7 @@ export default function AllTasksPage() {
 
                   {/* Overload Capacity Warning */}
                   {isAssigneeOverloaded && (
-                    <div className="mt-2 text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-2.5 flex items-center gap-2">
+                    <div className="mt-2 text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400 rounded-lg p-2.5 flex items-center gap-2">
                       <span>⚠</span>
                       <span>
                         <strong>Capacity Warning:</strong> {selectedAssigneeUser?.name} currently has {selectedAssigneeUser?.open_hours} hrs assigned (over 100% capacity).
@@ -546,11 +566,11 @@ export default function AllTasksPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
+                <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
+                    className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -574,4 +594,3 @@ export default function AllTasksPage() {
     </div>
   );
 }
-

@@ -47,7 +47,7 @@ export default function LeaderboardPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -57,17 +57,17 @@ export default function LeaderboardPage() {
   const topThree = leaderboard.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span>🏆 Points Leaderboard</span>
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Rankings of team members based on points earned from completing Open Pool tasks.
             </p>
           </div>
@@ -121,13 +121,13 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex gap-2 border-b border-gray-200 mb-6">
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 mb-6">
           <button
             onClick={() => setActiveTab("ranking")}
             className={`pb-3 px-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               activeTab === "ranking"
                 ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             Leaderboard Rankings
@@ -137,7 +137,7 @@ export default function LeaderboardPage() {
             className={`pb-3 px-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               activeTab === "history"
                 ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             My Points Ledger ({myPoints.history.length})
@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="text-sm text-gray-500 mt-2">Loading leaderboard scores...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Loading leaderboard scores...</p>
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
@@ -160,23 +160,23 @@ export default function LeaderboardPage() {
             {topThree.length >= 2 && (
               <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-8 text-center items-end">
                 {/* 2nd Place */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-col items-center">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm flex flex-col items-center">
                   <div className="text-2xl mb-1">🥈</div>
-                  <div className="font-bold text-sm text-gray-900 truncate max-w-full">
+                  <div className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate max-w-full">
                     {topThree[1].name}
                   </div>
                   <div className="text-xs text-indigo-600 font-extrabold mt-1">
                     {topThree[1].total_points} pts
                   </div>
-                  <span className="text-[10px] uppercase font-semibold text-gray-400 mt-0.5">
+                  <span className="text-[10px] uppercase font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
                     2nd Place
                   </span>
                 </div>
 
                 {/* 1st Place (Taller) */}
-                <div className="bg-gradient-to-b from-amber-50 to-white rounded-2xl border-2 border-amber-300 p-5 shadow-md flex flex-col items-center transform -translate-y-2">
+                <div className="bg-gradient-to-b from-amber-50 to-white dark:from-amber-900/30 dark:to-gray-800 rounded-2xl border-2 border-amber-300 p-5 shadow-md flex flex-col items-center transform -translate-y-2">
                   <div className="text-3xl mb-1">🥇</div>
-                  <div className="font-extrabold text-base text-gray-900 truncate max-w-full">
+                  <div className="font-extrabold text-base text-gray-900 dark:text-gray-100 truncate max-w-full">
                     {topThree[0].name}
                   </div>
                   <div className="text-sm text-amber-600 font-black mt-1">
@@ -189,15 +189,15 @@ export default function LeaderboardPage() {
 
                 {/* 3rd Place */}
                 {topThree[2] ? (
-                  <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-col items-center">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm flex flex-col items-center">
                     <div className="text-2xl mb-1">🥉</div>
-                    <div className="font-bold text-sm text-gray-900 truncate max-w-full">
+                    <div className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate max-w-full">
                       {topThree[2].name}
                     </div>
                     <div className="text-xs text-indigo-600 font-extrabold mt-1">
                       {topThree[2].total_points} pts
                     </div>
-                    <span className="text-[10px] uppercase font-semibold text-gray-400 mt-0.5">
+                    <span className="text-[10px] uppercase font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
                       3rd Place
                     </span>
                   </div>
@@ -208,9 +208,9 @@ export default function LeaderboardPage() {
             )}
 
             {/* Full Table */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-left text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider">
                   <tr>
                     <th scope="col" className="px-6 py-3.5 w-16 text-center">
                       Rank
@@ -223,7 +223,7 @@ export default function LeaderboardPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
                   {leaderboard.map((entry) => {
                     const isMe = entry.user_id === user?.id;
 
@@ -239,9 +239,9 @@ export default function LeaderboardPage() {
                     return (
                       <tr
                         key={entry.user_id}
-                        className={`transition ${isMe ? "bg-indigo-50/50 font-medium" : "hover:bg-gray-50/75"}`}
+                        className={`transition ${isMe ? "bg-indigo-50/50 dark:bg-indigo-900/20 font-medium" : "hover:bg-gray-50/75 dark:hover:bg-gray-700/40"}`}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-gray-700">
+                        <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-gray-700 dark:text-gray-300">
                           {rankIcon}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -260,7 +260,7 @@ export default function LeaderboardPage() {
                               </div>
                             )}
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-900">{entry.name}</span>
+                              <span className="font-semibold text-gray-900 dark:text-gray-100">{entry.name}</span>
                               {isMe && (
                                 <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">
                                   You
@@ -273,7 +273,7 @@ export default function LeaderboardPage() {
                           <span className="text-base font-extrabold text-indigo-600">
                             {entry.total_points}
                           </span>
-                          <span className="text-xs text-gray-400 ml-1">pts</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">pts</span>
                         </td>
                       </tr>
                     );
@@ -286,10 +286,10 @@ export default function LeaderboardPage() {
           /* Points Ledger History Tab */
           <div>
             {myPoints.history.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 text-center py-16 px-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center py-16 px-4">
                 <div className="text-4xl mb-3">🪙</div>
-                <h3 className="text-lg font-semibold text-gray-900">No points earned yet</h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No points earned yet</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Claim an Open Pool task and mark it complete to earn your first points!
                 </p>
                 <div className="mt-4">
@@ -302,15 +302,15 @@ export default function LeaderboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="divide-y divide-gray-100">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {myPoints.history.map((item) => (
                     <div key={item.id} className="p-4 flex items-center justify-between gap-4">
                       <div>
-                        <h4 className="font-semibold text-sm text-gray-900">
+                        <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                           {item.task_title}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {item.reason} • {new Date(item.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -329,4 +329,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-

@@ -111,7 +111,7 @@ export default function AdminUsersPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -120,13 +120,13 @@ export default function AdminUsersPage() {
   // Admin access guard
   if (!currentUser || currentUser.role !== "admin") {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
         <Navbar />
         <main className="flex-1 max-w-lg mx-auto px-4 py-16 text-center">
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="text-4xl mb-3">🔒</div>
-            <h2 className="text-xl font-bold text-gray-900">Admin Privileges Required</h2>
-            <p className="text-gray-500 mt-2 text-sm">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Admin Privileges Required</h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
               Only users with the Admin role can manage accounts and roles.
             </p>
             <div className="mt-6">
@@ -158,17 +158,17 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
               Admin Role Management
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Promote users to Manager/Admin, adjust weekly capacity, and manage account statuses.
             </p>
           </div>
@@ -183,19 +183,19 @@ export default function AdminUsersPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-6 flex flex-col sm:flex-row gap-3">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm mb-6 flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             placeholder="Search by user name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
 
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
             <option value="">All Roles</option>
             <option value="admin">Admin</option>
@@ -206,7 +206,7 @@ export default function AdminUsersPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
             <option value="">All Statuses</option>
             <option value="active">Active Only</option>
@@ -218,21 +218,21 @@ export default function AdminUsersPage() {
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="text-sm text-gray-500 mt-2">Loading user directory...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Loading user directory...</p>
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
             {error}
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 text-center py-12 text-gray-500 text-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center py-12 text-gray-500 dark:text-gray-400 text-sm">
             No users found matching your filters.
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-left text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider">
                   <tr>
                     <th scope="col" className="px-6 py-3.5">
                       User
@@ -251,13 +251,13 @@ export default function AdminUsersPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
                   {filteredUsers.map((target) => {
                     const isSelf = target.id === currentUser.id;
                     const isUpdating = updatingId === target.id;
 
                     return (
-                      <tr key={target.id} className="hover:bg-gray-50/75 transition">
+                      <tr key={target.id} className="hover:bg-gray-50/75 dark:hover:bg-gray-700/40 transition">
                         {/* User column */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
@@ -276,15 +276,15 @@ export default function AdminUsersPage() {
                             )}
 
                             <div>
-                              <div className="font-semibold text-gray-900 flex items-center gap-2">
+                              <div className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                 <span>{target.name}</span>
                                 {isSelf && (
-                                  <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-normal">
+                                  <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded font-normal">
                                     You
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-gray-500">{target.email}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{target.email}</div>
                             </div>
                           </div>
                         </td>
@@ -295,7 +295,7 @@ export default function AdminUsersPage() {
                             value={target.role}
                             disabled={isSelf || isUpdating}
                             onChange={(e) => handleRoleChange(target, e.target.value as Role)}
-                            className="text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-gray-300 bg-white shadow-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer disabled:opacity-60"
+                            className="text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer disabled:opacity-60"
                           >
                             <option value="user">User</option>
                             <option value="manager">Manager</option>
@@ -319,9 +319,9 @@ export default function AdminUsersPage() {
                                   handleCapacityChange(target, val);
                                 }
                               }}
-                              className="w-18 text-xs border border-gray-300 rounded px-2 py-1 text-center focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                              className="w-18 text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-center bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                             />
-                            <span className="text-xs text-gray-500">hrs/wk</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">hrs/wk</span>
                           </div>
                         </td>
 
@@ -331,7 +331,7 @@ export default function AdminUsersPage() {
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                               target.is_active
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-gray-100 text-gray-600 border border-gray-200"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
                             }`}
                           >
                             {target.is_active ? "● Active" : "○ Deactivated"}
@@ -364,4 +364,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

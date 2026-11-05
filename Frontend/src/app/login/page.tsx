@@ -40,18 +40,18 @@ function LoginForm() {
   }, [error]);
 
   return (
-    <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-8 flex flex-col items-center gap-6">
+    <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-md p-8 flex flex-col items-center gap-6 border border-gray-100 dark:border-gray-700">
       {/* Logo / branding */}
       <div className="flex flex-col items-center gap-1 text-center">
-        <span className="text-3xl font-extrabold text-indigo-600 tracking-tight">
+        <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight">
           TaskFlow
         </span>
-        <p className="text-sm text-gray-500">Team task management</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Team task management</p>
       </div>
 
       {/* Error banner */}
       {error === "deactivated" && (
-        <div className="w-full rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 text-center">
+        <div className="w-full rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400 text-center">
           Your account has been deactivated. Please contact your admin.
         </div>
       )}
@@ -59,13 +59,13 @@ function LoginForm() {
       {/* Google sign-in button */}
       <a
         href={`${API_URL}/auth/google`}
-        className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
       >
         <GoogleLogo />
         Sign in with Google
       </a>
 
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
         Sign in with your Google account to get started.
       </p>
     </div>
@@ -74,8 +74,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Suspense fallback={<div className="text-gray-500 text-sm">Loading...</div>}>
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <Suspense fallback={<div className="text-gray-500 dark:text-gray-400 text-sm">Loading...</div>}>
         <LoginForm />
       </Suspense>
     </main>

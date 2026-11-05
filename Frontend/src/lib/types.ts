@@ -108,3 +108,14 @@ export interface MyPointsData {
   total_points: number;
   history: PointsHistoryItem[];
 }
+
+export interface TaskComment {
+  id: string;
+  task_id: string;
+  author_id: string;
+  author_name: string;
+  author_email: string;
+  author_avatar: string | null;
+  body: string;
+  created_at: string;
+}

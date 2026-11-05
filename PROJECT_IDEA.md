@@ -259,10 +259,10 @@ All role checks use one decorator: `@require_role("admin", "manager")`.
 - [ ] Points ledger and leaderboard
 
 **Phase 8: Tier 3 extras and polish**
-- [ ] Comment threads and reassign button
-- [ ] Polling refresh
-- [ ] Dark/light mode
-- [ ] UI cleanup
+- [x] Comment threads and reassign button
+- [x] Polling refresh
+- [x] Dark/light mode
+- [x] UI cleanup
 
 **Phase 9: Deploy and submit**
 - [ ] Deploy all three parts, set production env vars and OAuth redirect URIs

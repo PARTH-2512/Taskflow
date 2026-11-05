@@ -658,3 +658,133 @@ def task_activity(task_id):
 
     return jsonify(results)
 
+
+# ── Comments ───────────────────────────────────────────────────────────────
+
+@tasks_bp.route("/<uuid:task_id>/comments", methods=["GET"])
+@require_role()
+def get_comments(task_id):
+    """Get all comments for a task (sorted oldest first)."""
+    db = get_db()
+    with db.cursor() as cur:
+        # Verify task exists and user has permission
+        cur.execute("SELECT id, created_by, assigned_to, is_pool FROM tasks WHERE id = %s;", (str(task_id),))
+        task = cur.fetchone()
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+
+        user_id = g.user["sub"]
+        role = g.user["role"]
+        is_creator = str(task["created_by"]) == user_id
+        is_assignee = task["assigned_to"] and str(task["assigned_to"]) == user_id
+
+        if role != "admin" and not is_creator and not is_assignee and not task["is_pool"]:
+            return jsonify({"error": "You do not have permission to view this task"}), 403
+
+        cur.execute(
+            """
+            SELECT
+                tc.id,
+                tc.task_id,
+                tc.author_id,
+                tc.body,
+                tc.created_at,
+                u.name AS author_name,
+                u.email AS author_email,
+                u.avatar_url AS author_avatar
+            FROM task_comments tc
+            JOIN users u ON u.id = tc.author_id
+            WHERE tc.task_id = %s
+            ORDER BY tc.created_at ASC;
+            """,
+            (str(task_id),),
+        )
+        rows = cur.fetchall()
+
+    results = []
+    for c in rows:
+        dt = c["created_at"]
+        results.append({
+            "id": str(c["id"]),
+            "task_id": str(c["task_id"]),
+            "author_id": str(c["author_id"]),
+            "author_name": c["author_name"],
+            "author_email": c["author_email"],
+            "author_avatar": c["author_avatar"],
+            "body": c["body"],
+            "created_at": dt.isoformat() if isinstance(dt, datetime) else str(dt),
+        })
+
+    return jsonify(results)
+
+
+@tasks_bp.route("/<uuid:task_id>/comments", methods=["POST"])
+@require_role()
+def post_comment(task_id):
+    """Post a comment on a task."""
+    db = get_db()
+    with db.cursor() as cur:
+        # Verify task exists and user has permission
+        cur.execute("SELECT id, created_by, assigned_to, is_pool FROM tasks WHERE id = %s;", (str(task_id),))
+        task = cur.fetchone()
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+
+        user_id = g.user["sub"]
+        role = g.user["role"]
+        is_creator = str(task["created_by"]) == user_id
+        is_assignee = task["assigned_to"] and str(task["assigned_to"]) == user_id
+
+        if role != "admin" and not is_creator and not is_assignee and not task["is_pool"]:
+            return jsonify({"error": "You do not have permission to comment on this task"}), 403
+
+        data = request.get_json(silent=True) or {}
+        body = (data.get("body") or "").strip()
+        if not body:
+            return jsonify({"error": "Comment body cannot be empty"}), 400
+
+        cur.execute(
+            """
+            INSERT INTO task_comments (task_id, author_id, body)
+            VALUES (%s, %s, %s)
+            RETURNING id, task_id, author_id, body, created_at;
+            """,
+            (str(task_id), user_id, body),
+        )
+        comment = cur.fetchone()
+
+        # Log commented activity
+        _log_activity(cur, str(task_id), user_id, "commented", None, body[:100])
+
+        cur.execute(
+            """
+            SELECT
+                tc.id,
+                tc.task_id,
+                tc.author_id,
+                tc.body,
+                tc.created_at,
+                u.name AS author_name,
+                u.email AS author_email,
+                u.avatar_url AS author_avatar
+            FROM task_comments tc
+            JOIN users u ON u.id = tc.author_id
+            WHERE tc.id = %s;
+            """,
+            (str(comment["id"]),),
+        )
+        full_comment = cur.fetchone()
+        db.commit()
+
+    dt = full_comment["created_at"]
+    return jsonify({
+        "id": str(full_comment["id"]),
+        "task_id": str(full_comment["task_id"]),
+        "author_id": str(full_comment["author_id"]),
+        "author_name": full_comment["author_name"],
+        "author_email": full_comment["author_email"],
+        "author_avatar": full_comment["author_avatar"],
+        "body": full_comment["body"],
+        "created_at": dt.isoformat() if isinstance(dt, datetime) else str(dt),
+    }), 201
+

@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { apiGet, apiPatch } from "@/lib/api";
 import { Task, TaskStatus } from "@/lib/types";
+
+/** How often to silently refresh the task list (ms). */
+const POLL_INTERVAL_MS = 25_000; // 25 seconds
 
 export default function MyTasksPage() {
   const { user, loading: authLoading } = useAuth();
@@ -15,23 +18,39 @@ export default function MyTasksPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("active");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  async function loadTasks() {
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function loadTasks(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
       const data = await apiGet<Task[]>("/tasks/mine");
       setTasks(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load tasks");
+      if (!silent) setError(err.message || "Failed to load tasks");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
+  // Initial load
   useEffect(() => {
     if (user) {
       loadTasks();
     }
+  }, [user]);
+
+  // Polling — refresh silently every POLL_INTERVAL_MS
+  useEffect(() => {
+    if (!user) return;
+
+    pollRef.current = setInterval(() => {
+      loadTasks(true /* silent */);
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [user]);
 
   async function handleStatusChange(taskId: string, newStatus: TaskStatus) {
@@ -50,7 +69,7 @@ export default function MyTasksPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -67,47 +86,47 @@ export default function MyTasksPage() {
 
   const priorityLabel = { 3: "High", 2: "Medium", 1: "Low" };
   const priorityBadge = {
-    3: "bg-red-100 text-red-700 border-red-200",
-    2: "bg-amber-100 text-amber-700 border-amber-200",
-    1: "bg-gray-100 text-gray-700 border-gray-200",
+    3: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800",
+    2: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    1: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600",
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
               My Priority Tasks
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Sorted by Priority (High &rarr; Low), due date, and overdue urgency.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             {overdueCount > 0 && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
                 ⚠ {overdueCount} Overdue
               </span>
             )}
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800">
               {activeCount} Active Tasks
             </span>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-2 border-b border-gray-200 mb-6">
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 mb-6">
           <button
             onClick={() => setStatusFilter("active")}
             className={`pb-3 px-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               statusFilter === "active"
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             Active ({activeCount})
@@ -116,8 +135,8 @@ export default function MyTasksPage() {
             onClick={() => setStatusFilter("all")}
             className={`pb-3 px-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               statusFilter === "all"
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             All Tasks ({tasks.length})
@@ -126,8 +145,8 @@ export default function MyTasksPage() {
             onClick={() => setStatusFilter("completed")}
             className={`pb-3 px-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               statusFilter === "completed"
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             Completed ({tasks.length - activeCount})
@@ -138,17 +157,17 @@ export default function MyTasksPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="text-sm text-gray-500 mt-2">Loading tasks...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Loading tasks...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 mb-6">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400 mb-6">
             {error}
           </div>
         ) : filteredTasks.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 text-center py-16 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-center py-16 px-4">
             <div className="text-4xl mb-3">🎉</div>
-            <h3 className="text-lg font-semibold text-gray-900">No tasks in this list</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No tasks in this list</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {statusFilter === "active"
                 ? "You're all caught up! Explore the Open Pool to claim tasks."
                 : "No tasks matched the selected filter."}
@@ -171,12 +190,12 @@ export default function MyTasksPage() {
               return (
                 <div
                   key={task.id}
-                  className={`bg-white rounded-xl border p-5 transition shadow-sm hover:shadow-md ${
+                  className={`bg-white dark:bg-gray-800 rounded-xl border p-5 transition shadow-sm hover:shadow-md ${
                     isOverdue
-                      ? "border-rose-300 ring-1 ring-rose-300 bg-rose-50/20"
+                      ? "border-rose-300 dark:border-rose-800 ring-1 ring-rose-300 dark:ring-rose-800 bg-rose-50/20 dark:bg-rose-900/5"
                       : task.status === "completed"
-                      ? "border-gray-200 opacity-75 bg-gray-50/50"
-                      : "border-gray-200"
+                      ? "border-gray-200 dark:border-gray-700 opacity-75"
+                      : "border-gray-200 dark:border-gray-700"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -198,13 +217,13 @@ export default function MyTasksPage() {
                         )}
 
                         {task.is_pool && (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                             From Pool
                           </span>
                         )}
 
                         {task.estimated_hours && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             ⏱ {task.estimated_hours} hrs
                           </span>
                         )}
@@ -213,10 +232,10 @@ export default function MyTasksPage() {
                       {/* Title */}
                       <Link
                         href={`/tasks/${task.id}`}
-                        className={`text-lg font-semibold hover:text-indigo-600 transition block ${
+                        className={`text-lg font-semibold hover:text-indigo-600 dark:hover:text-indigo-400 transition block ${
                           task.status === "completed"
-                            ? "line-through text-gray-500"
-                            : "text-gray-900"
+                            ? "line-through text-gray-500 dark:text-gray-500"
+                            : "text-gray-900 dark:text-gray-100"
                         }`}
                       >
                         {task.title}
@@ -224,31 +243,31 @@ export default function MyTasksPage() {
 
                       {/* Description */}
                       {task.description && (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                           {task.description}
                         </p>
                       )}
 
                       {/* Metadata footer */}
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                         {task.due_date && (
-                          <span className={isOverdue ? "text-rose-600 font-semibold" : ""}>
+                          <span className={isOverdue ? "text-rose-600 dark:text-rose-400 font-semibold" : ""}>
                             📅 Due: {task.due_date}
                           </span>
                         )}
                         <span>Assigned by: {task.creator_name || task.creator_email}</span>
                         <Link
                           href={`/tasks/${task.id}`}
-                          className="text-indigo-600 hover:underline ml-auto font-medium"
+                          className="text-indigo-600 dark:text-indigo-400 hover:underline ml-auto font-medium"
                         >
-                          View Details & Activity &rarr;
+                          View Details &amp; Activity &rarr;
                         </Link>
                       </div>
                     </div>
 
                     {/* Status Changer */}
                     <div className="sm:self-center flex sm:flex-col items-center gap-2 min-w-[140px]">
-                      <span className="text-xs text-gray-400 sm:block hidden text-center">
+                      <span className="text-xs text-gray-400 dark:text-gray-500 sm:block hidden text-center">
                         Update Status
                       </span>
                       <select
@@ -259,10 +278,10 @@ export default function MyTasksPage() {
                         }
                         className={`w-full text-xs font-semibold rounded-lg px-3 py-2 border shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer ${
                           task.status === "completed"
-                            ? "bg-green-50 text-green-700 border-green-200"
+                            ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
                             : task.status === "in_progress"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : "bg-amber-50 text-amber-700 border-amber-200"
+                            ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                            : "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
                         }`}
                       >
                         <option value="pending">⏳ Pending</option>
@@ -280,4 +299,3 @@ export default function MyTasksPage() {
     </div>
   );
 }
-
